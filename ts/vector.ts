@@ -50,6 +50,10 @@ export class Vec2 {
         this.y = y;
     }
 
+    isNaN() : boolean {
+        return isNaN(this.x) || isNaN(this.y);
+    }
+
     equals(pt: Vec2): boolean {
         return this.x == pt.x && this.y == pt.y;
     }
