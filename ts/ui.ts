@@ -1,6 +1,39 @@
 import { assert, sum } from "./util";
 import { Vec2 } from "./vector";
 
+function pixUI(s : string) : number {
+    assert(s.endsWith("px"));
+    return parseFloat(s.slice(0, -2));
+}
+
+export function ratioUI(s: string) : number {
+    assert(s.endsWith("%"));
+    return parseFloat(s.slice(0, -1)) / 100;
+}
+
+function ratioSum(ratioes : string[]) : number {
+    const pix_nums = ratioes.map(x => ratioUI(x));
+    return sum(pix_nums);
+}
+
+function minTotalSize(columns : string[], pix_sum : number, min_size : number) : number {
+    const ratio_columns = columns.filter(x => x.endsWith("%"));
+    if(ratio_columns.length == 0){
+        return 0;
+    }
+
+    const ratio_sum = ratioSum(ratio_columns);
+
+    if(min_size < pix_sum){
+        return 0;
+    }
+
+    const ratio_pix = min_size - pix_sum;
+
+    // grid-width * ratio_sum = ratio_pix
+    return ratio_pix / ratio_sum;
+}
+
 export interface AbstractUIAttr {
     padding? : number | [number, number] | [number, number, number, number];
     colSpan? : number;
@@ -107,7 +140,6 @@ export interface IGrid {
 
 type AbstractGrid = AbstractUI & IGrid;
 
-/*
 function getColumnsPix(grid : AbstractGrid){
     const pix_columns = new Array(grid.numCols).fill(0) as number[];
 
@@ -146,9 +178,7 @@ function getRowsPix(grid : AbstractGrid){
     return pix_rows;
 }
 
-
-
-function setMinSize(grid : AbstractGrid) : void {
+export function setMinSizeGrid(grid : AbstractGrid) : void {
     assert(!isNaN(grid.numCols) && !isNaN(grid.numRows));
 
     grid.absChildren().forEach(x => x.setMinSize());
@@ -170,11 +200,11 @@ function setMinSize(grid : AbstractGrid) : void {
         for(const child of grid.absChildren()){
             const columns = grid.columns.slice(child.colIdx, child.colIdx + child.getColSpan());
             const pix_col_sum = sum(grid.columnsPix.slice(child.colIdx, child.colIdx + child.getColSpan()));
-            max_grid_ratio_width = Math.max(max_grid_ratio_width, Grid.minTotalSize(columns, pix_col_sum, child.minSize.x));
+            max_grid_ratio_width = Math.max(max_grid_ratio_width, minTotalSize(columns, pix_col_sum, child.minSize.x));
 
             const rows = grid.rows.slice(child.rowIdx, child.rowIdx + child.getRowSpan());
             const pix_row_sum = sum(grid.rowsPix.slice(child.rowIdx, child.rowIdx + child.getRowSpan()));
-            max_grid_ratio_height = Math.max(max_grid_ratio_height, Grid.minTotalSize(rows, pix_row_sum, child.minSize.y));
+            max_grid_ratio_height = Math.max(max_grid_ratio_height, minTotalSize(rows, pix_row_sum, child.minSize.y));
         }
 
         const grid_pix_width  = sum(grid.columnsPix);
@@ -186,4 +216,3 @@ function setMinSize(grid : AbstractGrid) : void {
 
     grid.netSize.copyFrom(grid.minSize);
 }
-*/
