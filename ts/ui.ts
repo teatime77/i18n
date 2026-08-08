@@ -1,9 +1,11 @@
+import { assert, sum } from "./util";
 import { Vec2 } from "./vector";
 
 export interface AbstractUIAttr {
     padding? : number | [number, number] | [number, number, number, number];
     colSpan? : number;
     rowSpan? : number;
+    borderWidth? : number;
 }
 
 
@@ -29,12 +31,18 @@ export class Padding {
     }
 }
 
+const UI_padding : Padding = new Padding(5, 5, 5, 5);
+const UI_borderWidth : number = 5;
+
 export abstract class AbstractUI {
     colSpan? : number;
     rowSpan? : number;
     colIdx!  : number;
     rowIdx!  : number;
+    fixedSize? : Vec2;
     minSize  : Vec2 = Vec2.zero();
+    netSize  : Vec2 = Vec2.zero();
+    borderWidth? : number;
     padding? : Padding;
 
     abstract getPosition() : Vec2;
@@ -67,6 +75,23 @@ export abstract class AbstractUI {
             }
         }
     }
+
+    getPadding() : Padding {
+        return this.padding ?? UI_padding;
+    }
+
+    getBorderWidth() : number {
+        return this.borderWidth !== undefined ? this.borderWidth : UI_borderWidth;
+    }
+
+    getPaddingBorderSize() : Vec2 {
+        const padding = this.getPadding();
+        const borderWidth = this.getBorderWidth();
+
+        const width  = padding.width()  + 2 * borderWidth;
+        const height = padding.height() + 2 * borderWidth;
+        return Vec2.fromXY(width, height);
+    }
 }
 
 export interface IGrid {
@@ -79,3 +104,86 @@ export interface IGrid {
 
     absChildren() : AbstractUI[];
 }
+
+type AbstractGrid = AbstractUI & IGrid;
+
+/*
+function getColumnsPix(grid : AbstractGrid){
+    const pix_columns = new Array(grid.numCols).fill(0) as number[];
+
+    for(const [col_idx, col] of grid.columns.entries()){
+        if(col.endsWith("px")){
+            pix_columns[col_idx] = pixUI(col);
+        }
+        else if(col == "*"){
+            const col_children = grid.absChildren().filter(x => x.colIdx == col_idx && x.getColSpan() == 1);
+
+            if(col_children.length != 0){
+                pix_columns[col_idx] = Math.max(...col_children.map(x => x.minSize.x));
+            }
+        }
+    }
+
+    return pix_columns;
+}
+
+function getRowsPix(grid : AbstractGrid){
+    const pix_rows = new Array(grid.numRows).fill(0) as number[];
+
+    for(const [row_idx, row] of grid.rows.entries()){
+        if(row.endsWith("px")){
+            pix_rows[row_idx] = pixUI(row);
+        }
+        else if(row == "*"){
+            const row_children = grid.absChildren().filter(x => x.rowIdx == row_idx && x.getRowSpan() == 1);
+
+            if(row_children.length != 0){
+                pix_rows[row_idx] = Math.max(...row_children.map(x => x.minSize.y));
+            }
+        }
+    }
+
+    return pix_rows;
+}
+
+
+
+function setMinSize(grid : AbstractGrid) : void {
+    assert(!isNaN(grid.numCols) && !isNaN(grid.numRows));
+
+    grid.absChildren().forEach(x => x.setMinSize());
+
+    if(grid.fixedSize !== undefined){
+
+        grid.minSize.copyFrom(grid.fixedSize);
+    }
+    else{
+
+        const padding_border_size : Vec2 = grid.getPaddingBorderSize();
+
+        let max_grid_ratio_width  = 0;
+        let max_grid_ratio_height = 0;
+
+        grid.columnsPix = getColumnsPix(grid);
+        grid.rowsPix    = getRowsPix(grid);
+
+        for(const child of grid.absChildren()){
+            const columns = grid.columns.slice(child.colIdx, child.colIdx + child.getColSpan());
+            const pix_col_sum = sum(grid.columnsPix.slice(child.colIdx, child.colIdx + child.getColSpan()));
+            max_grid_ratio_width = Math.max(max_grid_ratio_width, Grid.minTotalSize(columns, pix_col_sum, child.minSize.x));
+
+            const rows = grid.rows.slice(child.rowIdx, child.rowIdx + child.getRowSpan());
+            const pix_row_sum = sum(grid.rowsPix.slice(child.rowIdx, child.rowIdx + child.getRowSpan()));
+            max_grid_ratio_height = Math.max(max_grid_ratio_height, Grid.minTotalSize(rows, pix_row_sum, child.minSize.y));
+        }
+
+        const grid_pix_width  = sum(grid.columnsPix);
+        const grid_pix_height = sum(grid.rowsPix);
+
+        grid.minSize.x = grid_pix_width  + max_grid_ratio_width  + padding_border_size.x;
+        grid.minSize.y = grid_pix_height + max_grid_ratio_height + padding_border_size.y;
+    }
+
+    grid.netSize.copyFrom(grid.minSize);
+}
+*/
