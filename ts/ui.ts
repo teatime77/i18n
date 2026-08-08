@@ -40,6 +40,12 @@ export abstract class AbstractUI {
     abstract getPosition() : Vec2;
     abstract setPosition(position : Vec2) : void;
 
+    setMinSize() : void {        
+    }
+
+    layout(position : Vec2, size : Vec2, nest : number = 0) : void {        
+    }
+
     getColSpan() : number {
         return this.colSpan ?? 1;
     }
@@ -61,4 +67,15 @@ export abstract class AbstractUI {
             }
         }
     }
+}
+
+export interface IGrid {
+    columns : string[];
+    rows    : string[];
+    numCols : number;
+    numRows : number;
+    columnsPix : number[];
+    rowsPix    : number[];
+
+    absChildren() : AbstractUI[];
 }
