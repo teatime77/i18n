@@ -3,4 +3,4 @@ export { append, check, assert, MyError, msg, getPlayMode, PlayMode, range, slee
 export { $, $div, $dlg, $inp, $sel, sum, arrayFill, last, range2, permutation, areSetsEqual, isSubSet, intersection, unique, setPlayMode, parseURL, downloadJson } from "./util.js";
 export { Speech, setOnSpeak, langCodeList, voiceLanguageCode, initSpeech, setVoiceLanguageCode, cancelSpeech } from "./speech.js";
 export { Vec2, Vec3 } from "./vector.js";
-export { AbstractUIAttr, AbstractUI, Padding, IGrid, setMinSizeGrid, ratioUI } from "./ui.js";
+export { AbstractUIAttr, AbstractUI, Padding, IGrid, setMinSizeGrid, getDocumentSize, layoutGrid } from "./ui.js";

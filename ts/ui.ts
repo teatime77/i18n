@@ -1,12 +1,19 @@
-import { assert, sum } from "./util";
+import { assert, last, sum } from "./util";
 import { Vec2 } from "./vector";
+
+export function getDocumentSize() : Vec2 {
+    const document_width  = document.documentElement.clientWidth;
+    const document_height = document.documentElement.clientHeight;
+
+    return Vec2.fromXY(document_width, document_height);
+}
 
 function pixUI(s : string) : number {
     assert(s.endsWith("px"));
     return parseFloat(s.slice(0, -2));
 }
 
-export function ratioUI(s: string) : number {
+function ratioUI(s: string) : number {
     assert(s.endsWith("%"));
     return parseFloat(s.slice(0, -1)) / 100;
 }
@@ -125,6 +132,11 @@ export abstract class AbstractUI {
         const height = padding.height() + 2 * borderWidth;
         return Vec2.fromXY(width, height);
     }
+
+    getContentSize() : Vec2 {
+        const padding_border_size = this.getPaddingBorderSize();
+        return this.netSize.sub(padding_border_size);
+    }
 }
 
 export interface IGrid {
@@ -215,4 +227,30 @@ export function setMinSizeGrid(grid : AbstractGrid) : void {
     }
 
     grid.netSize.copyFrom(grid.minSize);
+}
+
+
+export function layoutGrid(grid : AbstractGrid, position : Vec2, size : Vec2) : void {
+    const content_size = grid.getContentSize();
+    const columns_ratio_all = content_size.x - sum(grid.columnsPix);
+    const rows_ratio_all    = content_size.y - sum(grid.rowsPix);
+    assert(0 <= columns_ratio_all && 0 <= rows_ratio_all, `grid:layout: content:${content_size}\n  col:${grid.columnsPix.map(x => Math.floor(x))}\n  row:${grid.rowsPix.map(x => Math.floor(x))}\n  doc-size:${getDocumentSize()}`);
+    const columns_pix = Array.from(grid.columns.entries()).map(x => x[1].endsWith("%") ? ratioUI(x[1]) * columns_ratio_all : grid.columnsPix[x[0]]);
+    const rows_pix    = Array.from(grid.rows.entries()).map(x => x[1].endsWith("%") ? ratioUI(x[1]) * rows_ratio_all : grid.rowsPix[x[0]]);
+
+    const column_pos : number[] = [0];
+    columns_pix.forEach(x => column_pos.push( last(column_pos) + x ));
+
+    const row_pos : number[] = [0];
+    rows_pix.forEach(x => row_pos.push( last(row_pos) + x ));
+
+    for(const child of grid.absChildren()){
+        const x = column_pos[child.colIdx];
+        const y = row_pos[child.rowIdx];
+
+        const width  = sum(columns_pix.slice(child.colIdx, child.colIdx + child.getColSpan()));
+        const height = sum(rows_pix.slice(child.rowIdx, child.rowIdx + child.getRowSpan()));
+
+        child.layout(new Vec2(x, y), new Vec2(width, height));
+    }
 }
