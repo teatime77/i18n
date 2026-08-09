@@ -1,4 +1,4 @@
-import { assert, last, sum } from "./util";
+import { assert, last, msg, sum } from "./util";
 import { Vec2 } from "./vector";
 
 export function getDocumentSize() : Vec2 {
@@ -151,6 +151,64 @@ export interface IGrid {
 }
 
 type AbstractGrid = AbstractUI & IGrid;
+
+export function initGrid(grid : AbstractGrid, columns? : string, rows? : string){
+    if(columns !== undefined){
+
+        grid.columns = columns.split(" ");
+
+        grid.numCols = grid.columns.length;
+    }
+    else{
+        grid.columns = ["*"];
+        grid.numCols = 1;
+    }
+
+    setRowColIdxOfChildren(grid);
+
+    if(rows !== undefined){
+
+        grid.rows = rows.split(" ");
+        grid.numRows = grid.rows.length;
+    }
+    else{
+        if(grid.absChildren().length == 0){
+
+            grid.numRows = 0;
+            grid.rows    = [];
+        }
+        else{
+
+            grid.numRows = Math.max(... grid.absChildren().map(x => x.rowIdx + x.getRowSpan()));
+            grid.rows    = new Array(grid.numRows).fill("*");
+        }
+    }
+}
+
+export function setRowColIdxOfChildren(grid : AbstractGrid){
+    let col_idx = 0;
+    let row_idx = 0;
+    for(const child of grid.absChildren()){
+        child.colIdx = col_idx;
+        child.rowIdx = row_idx;
+
+        col_idx += child.getColSpan();
+        if(grid.numCols <= col_idx){
+            col_idx = 0;
+            row_idx++;
+        }
+    }
+
+    if(grid.rows != undefined && grid.rows.length < row_idx){
+        while(grid.rows.length < row_idx){
+            grid.rows.push("*");
+        }
+
+        grid.numRows = row_idx;
+        msg(`add rows to grid.`);
+    }
+}
+
 
 function getColumnsPix(grid : AbstractGrid){
     const pix_columns = new Array(grid.numCols).fill(0) as number[];
