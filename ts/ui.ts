@@ -8,7 +8,7 @@ export function getDocumentSize() : Vec2 {
     return Vec2.fromXY(document_width, document_height);
 }
 
-function pixUI(s : string) : number {
+export function pixUI(s : string) : number {
     assert(s.endsWith("px"));
     return parseFloat(s.slice(0, -2));
 }
