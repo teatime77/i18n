@@ -46,6 +46,7 @@ export interface AbstractUIAttr {
     colSpan? : number;
     rowSpan? : number;
     borderWidth? : number;
+    color? : string;
 }
 
 
@@ -84,6 +85,7 @@ export abstract class AbstractUI {
     netSize  : Vec2 = Vec2.zero();
     borderWidth? : number;
     padding? : Padding;
+    color? : string;
 
     abstract getPosition() : Vec2;
     abstract setPosition(position : Vec2) : void;
@@ -160,8 +162,15 @@ export function initGrid(grid : AbstractGrid, columns? : string, rows? : string)
         grid.numCols = grid.columns.length;
     }
     else{
-        grid.columns = ["*"];
-        grid.numCols = 1;
+        if(rows == "*"){
+
+            grid.numCols = grid.absChildren().length;
+            grid.columns = new Array(grid.numCols).fill("*");
+        }
+        else{
+            grid.columns = ["*"];
+            grid.numCols = 1;
+        }
     }
 
     setRowColIdxOfChildren(grid);
