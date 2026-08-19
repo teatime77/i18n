@@ -101,6 +101,7 @@ export function range2(start: number, end : number) : number[]{
 }
 
 export function last<T>(v : Array<T>) : T {
+    assert(v.length != 0);
     return v[v.length - 1];
 }
 

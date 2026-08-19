@@ -83,14 +83,19 @@ export abstract class AbstractUI {
     fixedSize? : Vec2;
     minSize  : Vec2 = Vec2.zero();
     netSize  : Vec2 = Vec2.zero();
+    absPos?  : Vec2;
     borderWidth? : number;
     padding? : Padding;
     color? : string;
 
+    static nearMargin = 10;
     abstract getPosition() : Vec2;
-    abstract setPosition(position : Vec2) : void;
 
     setMinSize() : void {        
+    }
+
+    setPosition(position : Vec2) : void {
+        this.absPos = position.copy();
     }
 
     layout(position : Vec2, size : Vec2, nest : number = 0) : void {        
@@ -138,6 +143,52 @@ export abstract class AbstractUI {
     getContentSize() : Vec2 {
         const padding_border_size = this.getPaddingBorderSize();
         return this.netSize.sub(padding_border_size);
+    }
+
+    getRightUI() : number {
+        assert(this.absPos != undefined);
+        return this.absPos!.x + this.netSize.x;
+    }
+
+    includePos(pos:Vec2) : boolean {
+        if(this.absPos != undefined){
+            return this.absPos.x <= pos.x && pos.x < this.absPos.x + this.netSize.x
+                && this.absPos.y <= pos.y && pos.y < this.absPos.y + this.netSize.y;
+        }
+
+        return false;
+    }
+
+    inY(pos:Vec2) : boolean {
+        if(this.absPos != undefined){
+            return this.absPos.y <= pos.y && pos.y < this.absPos.y + this.netSize.y;
+        }
+
+        return false;
+    }
+
+    nearLeft(pos:Vec2) : boolean {
+        if(this.inY(pos)){
+            return Math.abs(this.absPos!.x - pos.x) < AbstractUI.nearMargin;
+        }
+
+        return false;
+    }
+
+    nearRight(pos:Vec2) : boolean {
+        if(this.inY(pos)){
+            return Math.abs(this.absPos!.x + this.netSize.x - pos.x) < AbstractUI.nearMargin;
+        }
+
+        return false;
+    }
+
+    nearLeftRight(pos:Vec2) : boolean {
+        if(this.inY(pos)){
+            return Math.abs(this.absPos!.x - pos.x) < 10 || Math.abs(this.absPos!.x + this.netSize.x - pos.x) < AbstractUI.nearMargin;
+        }
+
+        return false;
     }
 }
 
@@ -300,7 +351,10 @@ export function setMinSizeGrid(grid : AbstractGrid) : void {
 export function layoutGrid(grid : AbstractGrid, position : Vec2, size : Vec2) : void {
     const content_size = grid.getContentSize();
     const columns_ratio_all = content_size.x - sum(grid.columnsPix);
-    const rows_ratio_all    = content_size.y - sum(grid.rowsPix);
+    let rows_ratio_all    = content_size.y - sum(grid.rowsPix);
+    if(Math.abs(rows_ratio_all) < 1.0e7){
+        rows_ratio_all = 0;
+    }
     assert(0 <= columns_ratio_all && 0 <= rows_ratio_all, `grid:layout: content:${content_size}\n  col:${grid.columnsPix.map(x => Math.floor(x))}\n  row:${grid.rowsPix.map(x => Math.floor(x))}\n  doc-size:${getDocumentSize()}`);
     const columns_pix = Array.from(grid.columns.entries()).map(x => x[1].endsWith("%") ? ratioUI(x[1]) * columns_ratio_all : grid.columnsPix[x[0]]);
     const rows_pix    = Array.from(grid.rows.entries()).map(x => x[1].endsWith("%") ? ratioUI(x[1]) * rows_ratio_all : grid.rowsPix[x[0]]);
